@@ -90,6 +90,7 @@
     )
 
   )
+
 (defun action4 (g)
   "Compute normalized betweenness-based matrix from adjacency matrix g"
   (let* ((n (length g))

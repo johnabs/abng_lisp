@@ -372,6 +372,8 @@
     )
   )
 
+;;(print (apply #'+ (vector-sample-n *test* '(0.8 0.2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0) 1000)))
+
 (defun matrix-to-adjacency-list (matrix)
   "Convert an adjacency matrix (list of lists) to an adjacency list representation.
    Each element in the result is a cons of (vertex . neighbors) where neighbors is
