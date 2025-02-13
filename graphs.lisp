@@ -7,6 +7,12 @@
 (defun nan-div (x y) (if (equalp 0 y) 0 (/ x y)
                          )
   )
+(defun inf-div (x y) (if (equalp 0 y) sb-ext:double-float-positive-infinity (/ x y)
+                         )
+  )
+
+(defun tensor-sum (tensor)
+  (apply #'+ (cl-ana.tensor:tensor-flatten tensor)))
 
 ;; Start with a simple reimplementation of ABNG code
 (defun list-to-tensor (nested-list)
@@ -164,7 +170,13 @@
   (cl-ana.linear-algebra:euclidean-dot  (ones (length adjacency-matrix)) adjacency-matrix)
   )
 
-(defun normalize-matrix (matrix)
+
+(defun normalize-tensor (tensor)
+  (cl-ana.tensor:tensor-/ tensor (tensor-sum tensor))
+  )
+
+
+(defun normalize-matrix-columns (matrix)
   "Normalize the columns of the adjacency matrix"
   (let* ((n (length matrix))
          (col-sums (make-array n :initial-element 0))
@@ -196,7 +208,7 @@
    Returns:
    Vector of PageRank values for each node"
   (let* ((n (length adjacency-matrix))
-         (normalized-matrix (normalize-matrix adjacency-matrix))
+         (normalized-matrix (normalize-matrix-columns adjacency-matrix))
          (rank-vector (make-array n :initial-element (/ 1.0 n)))
          (teleport-vector (make-array n :initial-element (/ 1.0 n))))
 
@@ -233,19 +245,21 @@
          (common (vector-intersection vertex-neighbors neighbors-vec)))
     (if (plusp (length common))
         (loop for i below (length common)
-              sum (/ 1.0d0 (log (1+ (ith-degree adj-tensor (aref common i))))))
-        0.0d0)))
+              sum (inf-div 1.0d0 (log (ith-degree adj-tensor (aref common i)))))
+        0.0d0))
+
+  )
 
 
-;;(defun inv-log (adj-list pair)
-;;  "Calculate inverse log based on intersection of neighbor sets"
-;;  (destructuring-bind (vertices neighbors-list) pair
-;;    (let* ((vertex-neighbors (neighbors adj-list vertices))
-;;           (common (intersection vertex-neighbors neighbors-list)))
-;;      (if common
-;;          (loop for vertex in common
-;;                sum (/ 1.0d0 (log (1+ (aref (degree adj-list) vertex)))))
-;;          0.0d0))))
+;; (defun inv-log (adj-list pair)
+;;   "Calculate inverse log based on intersection of neighbor sets"
+;;   (destructuring-bind (vertices neighbors-list) pair
+;;     (let* ((vertex-neighbors (neighbors adj-list vertices))
+;;            (common (intersection vertex-neighbors neighbors-list)))
+;;       (if common
+;;           (loop for vertex in common
+;;                 sum (/ 1.0d0 (log (1+ (aref (degree adj-list) vertex)))))
+;;           0.0d0))))
 
 
 (defun vector-union (vec1 vec2)
@@ -362,8 +376,8 @@
 
 (defun vector-sample-n (tensor weights n)
   (let ((u01 (distributions:r-uniform 0 1))
-        (dims (cl-ana.tensor:tensor-dimensions tensor))
-        (vec (cl-ana.tensor:tensor-flatten tensor))
+                                        ;(dims (cl-ana.tensor:tensor-dimensions tensor))
+                                        ;(vec (cl-ana.tensor:tensor-flatten tensor))
         (probs (cumsum (cl-ana.tensor:tensor-flatten weights)))
         )
     (loop for i in (alexandria:iota n)
@@ -372,7 +386,8 @@
     )
   )
 
-;;(print (apply #'+ (vector-sample-n *test* '(0.8 0.2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0) 1000)))
+
+(print (apply #'+ (vector-sample-n *test* '(0.8 0.2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0) 1000)))
 
 (defun matrix-to-adjacency-list (matrix)
   "Convert an adjacency matrix (list of lists) to an adjacency list representation.

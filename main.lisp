@@ -10,20 +10,6 @@
 (load "graphs.lisp")
 
 
-;; Helper Functions
-;; Example usage
-(let ((adjacency-matrix '((0 1 0 0 0 0)
-                          (1 0 1 0 0 0 )
-                          (0 1 0 1 0 0 )
-                          (0 0 1 0 1 0 )
-                          (0 0 0 1 0 1 )
-                          (0 0 0 0 1 0 )
-                          )
-                        ))
-  (action1 adjacency-matrix))
-
-
-
 ;; Action Functions
 (defun action1 (adjacency-matrix)
   "Compute the degree-distribution of each node in a graph from its adjacency matrix.
@@ -139,7 +125,7 @@
           (cumulative-sum-rows normalized)
           normalized))))
 
-(defun action6 (adj-tensor &key (cumulative t))
+(defun action6 (adj-tensor)
   "Process cl-ana tensor adjacency matrix using neighbor intersections"
   (let* ((n (first (cl-ana.tensor:tensor-dimensions adj-tensor)))
          (result-tensor (cl-ana.tensor:make-tensor (list n n)
@@ -156,66 +142,61 @@
         (setf (cl-ana.tensor:tref result-tensor i j)
               (inv-log adj-tensor i (aref neighbor-lists j)))))
 
+
     ;; Clear diagonal
     (dotimes (i n)
       (setf (cl-ana.tensor:tref result-tensor i i) 0.0d0))
 
-    ;; Normalize rows
-    (dotimes (i n)
-      (let ((row-sum (loop for j below n
-                           sum (cl-ana.tensor:tref result-tensor i j))))
-        (unless (zerop row-sum)
-          (dotimes (j n)
-            (setf (cl-ana.tensor:tref result-tensor i j)
-                  (/ (cl-ana.tensor:tref result-tensor i j) row-sum))))))
+
+    ;; Normalize matrix
+    ;; (dotimes (i n)
+    ;;   (let ((row-sum (loop for j below n
+    ;;                        sum (cl-ana.tensor:tref result-tensor i j))))
+    ;;     (unless (zerop row-sum)
+    ;;       (dotimes (j n)
+    ;;         (setf (cl-ana.tensor:tref result-tensor i j)
+    ;;               (/ (cl-ana.tensor:tref result-tensor i j) row-sum))))))
 
     ;; Apply cumulative sum if requested
-    (when cumulative
-      (dotimes (i n)
-        (let ((cumsum 0.0d0))
-          (dotimes (j n)
-            (incf cumsum (cl-ana.tensor:tref result-tensor i j))
-            (setf (cl-ana.tensor:tref result-tensor i j) cumsum)))))
-
-    result-tensor))
+    (normalize-tensor (tensor-to-list result-tensor))))
 
 
 
-(defun action6 (adj-list &key (cumulative t))
-  "Process adjacency list using neighbor intersections and inverse log values"
-  (let* ((n (length adj-list))
-         (result-matrix (make-array (list n n) :element-type 'double-float
-                                               :initial-element 0.0d0))
-         (neighbor-lists (loop for i below n collect (neighbors adj-list i))))
-
-    ;; Calculate inverse log values
-    (dotimes (i n)
-      (dotimes (j n)
-        (setf (aref result-matrix i j)
-              (inv-log adj-list (list i (nth j neighbor-lists))))))
-
-    ;; Clear diagonal
-    (dotimes (i n)
-      (setf (aref result-matrix i i) 0.0d0))
-
-    ;; Normalize rows and handle NaN
-    (dotimes (i n)
-      (let ((row-sum (loop for j below n sum (aref result-matrix i j))))
-        (unless (zerop row-sum)
-          (dotimes (j n)
-            (setf (aref result-matrix i j)
-                  (/ (aref result-matrix i j) row-sum))))))
-
-    ;; Apply cumulative sum if requested
-    (when cumulative
-      (dotimes (i n)
-        (let ((cumsum 0.0d0))
-          (dotimes (j n)
-            (incf cumsum (aref result-matrix i j))
-            (setf (aref result-matrix i j) cumsum)))))
-
-    ;; Convert result back to nested list format
-    (array-to-list result-matrix)))
+;;(defun action6 (adj-list &key (cumulative t))
+;;  "Process adjacency list using neighbor intersections and inverse log values"
+;;  (let* ((n (length adj-list))
+;;         (result-matrix (make-array (list n n) :element-type 'double-float
+;;                                               :initial-element 0.0d0))
+;;         (neighbor-lists (loop for i below n collect (neighbors adj-list i))))
+;;
+;;    ;; Calculate inverse log values
+;;    (dotimes (i n)
+;;      (dotimes (j n)
+;;        (setf (aref result-matrix i j)
+;;              (inv-log adj-list (list i (nth j neighbor-lists))))))
+;;
+;;    ;; Clear diagonal
+;;    (dotimes (i n)
+;;      (setf (aref result-matrix i i) 0.0d0))
+;;
+;;    ;; Normalize rows and handle NaN
+;;    (dotimes (i n)
+;;      (let ((row-sum (loop for j below n sum (aref result-matrix i j))))
+;;        (unless (zerop row-sum)
+;;          (dotimes (j n)
+;;            (setf (aref result-matrix i j)
+;;                  (/ (aref result-matrix i j) row-sum))))))
+;;
+;;    ;; Apply cumulative sum if requested
+;;    (when cumulative
+;;      (dotimes (i n)
+;;        (let ((cumsum 0.0d0))
+;;          (dotimes (j n)
+;;            (incf cumsum (aref result-matrix i j))
+;;            (setf (aref result-matrix i j) cumsum)))))
+;;
+;;    ;; Convert result back to nested list format
+;;    (array-to-list result-matrix)))
 
 
 (defun action7 (adj-list )
@@ -272,6 +253,8 @@
                         (1 1 0 0)
                         (1 0 0 0)))
 
+(defparameter *test2* (list-to-tensor *test2*))
+(print *test2*)
 
 (defparameter *test*  '((0 1 0 )
                         (1 0 1 )
@@ -289,7 +272,7 @@
 (print (action5 *test* :cumulative nil))
 
 ;; Apparently action6 has an error somewhere, this needs to be addressed.
-(print (action6 *test2* :cumulative nil))
+(print (action6 *test* :cumulative nil))
 
 (print (action7 *test*))
 
