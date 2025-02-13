@@ -160,45 +160,6 @@
     ;; Apply cumulative sum if requested
     (normalize-tensor (tensor-to-list result-tensor))))
 
-
-
-;;(defun action6 (adj-list &key (cumulative t))
-;;  "Process adjacency list using neighbor intersections and inverse log values"
-;;  (let* ((n (length adj-list))
-;;         (result-matrix (make-array (list n n) :element-type 'double-float
-;;                                               :initial-element 0.0d0))
-;;         (neighbor-lists (loop for i below n collect (neighbors adj-list i))))
-;;
-;;    ;; Calculate inverse log values
-;;    (dotimes (i n)
-;;      (dotimes (j n)
-;;        (setf (aref result-matrix i j)
-;;              (inv-log adj-list (list i (nth j neighbor-lists))))))
-;;
-;;    ;; Clear diagonal
-;;    (dotimes (i n)
-;;      (setf (aref result-matrix i i) 0.0d0))
-;;
-;;    ;; Normalize rows and handle NaN
-;;    (dotimes (i n)
-;;      (let ((row-sum (loop for j below n sum (aref result-matrix i j))))
-;;        (unless (zerop row-sum)
-;;          (dotimes (j n)
-;;            (setf (aref result-matrix i j)
-;;                  (/ (aref result-matrix i j) row-sum))))))
-;;
-;;    ;; Apply cumulative sum if requested
-;;    (when cumulative
-;;      (dotimes (i n)
-;;        (let ((cumsum 0.0d0))
-;;          (dotimes (j n)
-;;            (incf cumsum (aref result-matrix i j))
-;;            (setf (aref result-matrix i j) cumsum)))))
-;;
-;;    ;; Convert result back to nested list format
-;;    (array-to-list result-matrix)))
-
-
 (defun action7 (adj-list )
   "Process adjacency list using Jaccard index"
   (let* ((n (length adj-list))
@@ -219,28 +180,7 @@
     (dotimes (i n)
       (setf (aref result-matrix i i) 0.0d0))
 
-    ;; Normalize rows and handle NaN
-    (dotimes (i n)
-      (let ((row-sum (loop for j below n sum (aref result-matrix i j))))
-        (unless (zerop row-sum)
-          (dotimes (j n)
-            (setf (aref result-matrix i j)
-                  (/ (aref result-matrix i j) (* row-sum n))
-                  )))))
-
-    ;; Apply cumulative sum if requested
-    ;;(when cumulative
-    ;;  (dotimes (i n)
-    ;;    (let ((cumsum 0.0d0))
-    ;;      (dotimes (j n)
-    ;;        (incf cumsum (aref result-matrix i j))
-    ;;        (setf (aref result-matrix i j) cumsum)))))
-
-    ;; Convert result to nested list format
-    ;;(loop for i below n
-    ;;      collect (loop for j below n
-    ;;                    collect (coerce (aref result-matrix i j) 'double-float)))
-    (list-to-tensor (cl-ana.linear-algebra:lisp-2d-array->tensor result-matrix))
+    (list-to-tensor (normalize-tensor (cl-ana.linear-algebra:lisp-2d-array->tensor result-matrix)))
     ))
 
 
