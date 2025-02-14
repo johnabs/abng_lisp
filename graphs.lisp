@@ -1,7 +1,8 @@
-
 (ql:quickload :cl-ana)
 (ql:quickload :distributions)
 (ql:quickload :alexandria)
+(ql:quickload :lla)
+(ql:quickload :array-operations/all)
 
 (defun ones (l) (cl-ana.linear-algebra:make-vector l :initial-element 1))
 (defun nan-div (x y) (if (equalp 0 y) 0 (/ x y)
@@ -67,10 +68,10 @@
           collect (loop for j below n
                         collect (coerce (aref arr i j) 'double-float)))))
 
-(defun degree (adj-list vertex)
-  "Calculate degree of a vertex in the graph"
-  (loop for x in (nth vertex adj-list)
-        sum x))
+;; (defun degree (adj-list vertex)
+;;   "Calculate degree of a vertex in the graph"
+;;   (loop for x in (nth vertex adj-list)
+;;         sum x))
 
 ;; (defun neighbors (adj-list vertex)
 ;;   "Get list of neighbors for a vertex"
@@ -172,8 +173,8 @@
 
 
 (defun normalize-tensor (tensor)
-  (cl-ana.tensor:tensor-/ tensor (tensor-sum tensor))
-  )
+  (list-to-array (cl-ana.tensor:tensor-map (alexandria:rcurry #'/ (tensor-sum tensor)) tensor)))
+
 
 
 (defun normalize-matrix-columns (matrix)
@@ -341,9 +342,9 @@
   `(if (queue-empty-p ,queue) nil (setf ,queue (reverse (cdr (reverse ,queue)))))
   )
 
-(defun push-stack (item stack)
-  (cons item stack)
-  )
+;;(defun push-stack (item stack)
+;;  (cons item stack)
+;;  )
 
 (defun stack-empty-p (stack)
   (equalp stack nil ))
@@ -362,7 +363,6 @@
 
 
 (defparameter *rv-uniform* (distributions:r-uniform 0 1))
-(print (distributions:draw *rv-uniform*))
 (defun cumsum (list)
   (let ((newlist '(0)))
     (loop for i in (alexandria:iota (length list)) do
@@ -372,12 +372,9 @@
     )
   )
 
-(print (cumsum '(1 0 0 0 0)))
 
-(defun vector-sample-n (tensor weights n)
+(defun vector-sample-n (weights n)
   (let ((u01 (distributions:r-uniform 0 1))
-                                        ;(dims (cl-ana.tensor:tensor-dimensions tensor))
-                                        ;(vec (cl-ana.tensor:tensor-flatten tensor))
         (probs (cumsum (cl-ana.tensor:tensor-flatten weights)))
         )
     (loop for i in (alexandria:iota n)
@@ -387,7 +384,6 @@
   )
 
 
-(print (apply #'+ (vector-sample-n *test* '(0.8 0.2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0) 1000)))
 
 (defun matrix-to-adjacency-list (matrix)
   "Convert an adjacency matrix (list of lists) to an adjacency list representation.
