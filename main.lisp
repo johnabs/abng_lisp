@@ -1,65 +1,61 @@
 ;; Enable maximum debug settings, can change to space and speed for better performance later
 (declaim (optimize (speed 0) (space 0) (debug 3)))
 
-(ql:quickload :cl-ana)
-(ql:quickload :distributions)
-(ql:quickload :alexandria)
-(ql:quickload :lla)
-                                        ;(ql:quickload :aops)
-(ql:quickload :array-operations/all)
+;;(ql:quickload :trivial-time)
 
+(load "random.lisp")
 (load "graphs.lisp")
 (load "actions.lisp")
 
+;; Load target graph and pre-compute its inverse for fixed-point checks.
+(defparameter *target* #2A((0 1 1 0)
+                           (1 0 1 0)
+                           (1 1 0 0)
+                           (0 0 0 0)))
 
-;; Action Functions
+(defparameter *inverse-g-star* (aops:each #'- (ones-m (array-dimension *target* 0)) *target*))
+
+(defun fixed-point-p (action graph)
+  (equalp (lla:asum (aops:each #'* *inverse-g-star* (funcall action graph))) 0)
+  )
+
 
 
 
 ;; Macros to modify actions to accept thresholds.
+(defmacro thresholds ())
+
 
 ;; Testing code
-(defparameter *test*  '((0 1 1 0)
-                        (1 0 1 0)
-                        (1 1 0 0)
-                        (0 0 0 0)))
+(print (aops:vectorize-reduce #'+ (*inverse-g-star*) *inverse-g-star*))
+(print (lla:asum *inverse-g-star*))
 
-(defparameter *a1t* (action1 *test*))
-(defun scal (x y) (aops:each (alexandria:curry #'* x) y))
+
+
+(defparameter *a1t* (action1 *target*))
 (defparameter *actions* #(action1 action2 action3 action4 action5 action6 action7))
 
 
-(defparameter *res1* (map-array *actions* (lambda (x) (funcall x *test*)) ))
+(defparameter *res1* (map-array *actions* (lambda (x) (funcall x *target*))))
 
 (print (cumsum (aops:each #'scal (rand-pmf 7) *res1*)))
 
 (sum (lla:dot (ones len) start))
 
-(defun rand-pmf (len)
-  (let* (
-         (start (aops:generate (lambda () (random 1.0)) (list len)))
-         (sum (lla:dot (ones len) start))
-         )
-    (aops:each (alexandria:rcurry #'/ sum) start)
-    )
-  )
-
-(print (aops:generate (lambda () (random 1.0)) '(7)))
 
 (print (rand-pmf 7))
 
+(print (action1 *target*))
+(print (action2 *target*))
+(print (action3 *target*))
+(print (action4 *target*))
+(print (action5 *target*))
+(print (action6 *target*))
+(print (action7 *target*))
 
-(print (scal 0.2 *a1t*))
-(print *a1t*)
-(print (action1 *test*))
-(print (action2 *test*))
-(print (action3 *test*))
-(print (action4 *test*))
-(print (action5 *test*))
-(print (action6 *test*))
-(print (action7 *test*))
+(trivial-time:benchmark (10000) (action7 *target*))
 
-(print (vector-sample-n (action 6 *test*) '(0.8 0.2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0) 1000))
+(print (vector-sample-n (action4 *target*) 100))
 ;; Usage:
 (defmethod map-array (array function
                       &optional (retval (make-array (array-dimensions array))))
